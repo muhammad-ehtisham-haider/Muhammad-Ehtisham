@@ -102,6 +102,7 @@ let variantId = null;
              body: JSON.stringify(formData)
            })
            .then(response => {
+            alert('Product Added To Cart')
              return response.json();
            })
            .catch((error) => {
