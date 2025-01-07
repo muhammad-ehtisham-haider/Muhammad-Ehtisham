@@ -1,0 +1,508 @@
+<script>
+
+
+
+    
+
+
+
+    function openProductDetails(productId) {
+
+const productArr = document.querySelectorAll('.product-popup-wrapper .product-item')
+productArr.forEach(prodEl =>{
+    if(productId === Number(prodEl.getAttribute('data-product-id')) ) {
+        prodEl.style.display = 'block';
+        prodEl.parentNode.style.display = 'block';
+        document.querySelector("body").style.overflow = "hidden";
+    } else {
+        
+    }
+})
+    }
+    function selectColorVar(colorVar){
+ 
+
+        const url = new URL(window.location.href);
+url.searchParams.set('color', colorVar.getAttribute('data-color'));
+window.history.pushState(null, '', url.toString());
+    
+    }
+    function selectSizeVar(sizeVar){
+      
+
+        const url = new URL(window.location.href);
+url.searchParams.set('size', sizeVar.options[sizeVar.selectedIndex].value);
+window.history.pushState(null, '', url.toString());
+    
+    }
+    async function addToCart( productHandle , varQty){
+        const urlParams = new URLSearchParams(window.location.search);
+const size = urlParams.get('size');
+const color = urlParams.get('color');
+
+let variantId = null;    
+        
+
+       await fetch(window.Shopify.routes.root + `products/${productHandle}.js`)
+        .then(response => response.json())
+
+        .then(product => {
+
+                product.variants.map( (prod, index) =>{
+                    if(prod.options[0] == size && prod.options[1] == color) {
+                        variantId = prod.id
+                    } else {
+                       
+                        if(index === 0){
+                            variantId = prod.id
+                        }
+                    }
+                })
+        }
+
+    );
+    let formData = {}
+    if(size === 'M' && color === "Black"){
+         formData = {
+            'items': [{
+             'id': variantId,
+             'quantity': varQty
+             },
+            {
+            'id': 50992942612764,
+            'quantity': varQty
+            }
+            ]
+           };
+    }
+    else if(!size || !color ){
+        formData = {
+            'items': [
+            {
+            'id': variantId,
+            'quantity': varQty
+            }
+            ]
+           };
+    }
+    else {
+         formData = {
+            'items': [{
+             'id': variantId,
+             'quantity': varQty
+             }]
+           };
+        }
+
+           fetch(window.Shopify.routes.root + 'cart/add.js', {
+             method: 'POST',
+             headers: {
+               'Content-Type': 'application/json'
+             },
+             body: JSON.stringify(formData)
+           })
+           .then(response => {
+            alert('Product Added To Cart')
+             return response.json();
+           })
+           .catch((error) => {
+             console.error('Error:', error);
+           });
+    }
+
+
+    function closePopUp(e){
+   
+        e.parentNode.style.display = 'none';
+        document.querySelector(".product-popup-wrapper").style.display = 'none';
+        document.querySelector("body").style.overflow = "unset";   
+    }
+
+
+  
+</script>
+<section class="feature-products">
+    <div class="container">
+        <div class="feature-product-deccription"> {{ section.settings.feature-product-description }} </div>
+        <div class="product-blocks-grid">
+            {% for block in section.blocks %}
+                {% if block.settings.product != blank %}
+                    {% assign product = all_products[block.settings.product] %}
+                    <div class="product-block">
+                        <img class="product-image" src="{{ product.featured_image | img_url: 'medium' }}" alt="{{ product.title }}">
+                        <div class="product-item-view" onclick="openProductDetails({{ product.id }})">
+                            {% render 'icon-view' %}
+                        </div>
+                    </div>
+                    
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<div class="product-popup-wrapper">
+    {% for block in section.blocks %}
+        {% if block.settings.product != blank %}
+            {% assign product = all_products[block.settings.product] %}
+            <div class="product-item" data-product-id="{{ product.id }}" >
+                <div class="close-pop-up" onclick="closePopUp(this)"> {% render 'icon-close' %} </div>
+                <div class="product-item-info-wrapper">
+                    <div class="product-item-image">
+                        <img class="product-image" src="{{ product.featured_image | img_url: 'medium' }}" alt="{{ product.title }}">
+                    </div>
+                    <div class="product-item-info">
+                        <div class="product-item-title">{{ product.title }}</div>
+                        <div class="product-item-price">{{ product.price | money}}</div>
+                        <div class="product-item-description">{{ product.description }}</div>
+                    </div>
+                </div>
+                <div class="product-item-variant-info">
+
+                                     {% if product.options contains 'Color' %}   
+                                        <label class="varaint-color-heading">Color </label>           
+                                        <div class="variant-color">
+                                            {% for option in product.options_with_values %}
+                                                {% if option.name == "Color" %}                                                   
+                                                    {% for value in option.values %}
+                                                        <button onclick="selectColorVar(this)" class="color-button
+                                                            {% if product.selected_or_first_available_varaint.option1 == value %} active {% endif %} "
+                                                             data-color="{{ value }}" data-varaint-id="{{ product.varaint | where: 'option1', value | first }}">
+                                                             <span class="color-name">  </span>
+                                                             <span class="button-text"> {{ value }} </span>
+                                                        </button>
+                                                    {% endfor %}
+                                                {% endif %}
+                                            {% endfor %}
+                                        </div>
+                                     {% if product.options contains 'Size' %}
+                                        <label for="varaint-size-select">Size </label>
+                                        <div class="varaint-size">
+                                          
+                                            <select id="varaint-size-select" name="size" onchange="selectSizeVar(this)"> 
+                                            {% for option in product.options_with_values %}
+                                                {% if option.name == "Size" %}
+                                                    <option> Choose your size </option>
+                                                    {% for value in option.values %}
+                                                        <option value="{{ value }}" data-varaint-id="{{  product.varaint | where: 'option2', value | first }}" {% if product.selected_or_first_available_varaint.option2 == value   %} selected {% endif %}> 
+                                                            {{ value }}
+                                                        </option>
+
+                                                    {% endfor %}
+                                                {% endif %}   
+
+                                            {%  endfor %}
+
+                                                 </select>
+                                        </div>
+
+                                     {% endif %}
+
+                                     {% endif %}
+  
+                </div>
+
+                <div class="product-item-add--to--cart">
+
+                    <button class="custom-btn btn-primary" onclick="addToCart( '{{ product.handle }}' , 1)" style="width: 100%; margin-top: 51px">
+                        <span>   Add To Cart
+                        <img class="arrow-black" src="https://cdn.shopify.com/s/files/1/0910/9664/5916/files/arrow_black.png?v=1736159703">  
+                        <img class="arrow-white" src="https://cdn.shopify.com/s/files/1/0910/9664/5916/files/arrow_white.png?v=1736159703">        
+                        </span></button>
+                </div>
+            </div>
+        {% endif %}
+    {% endfor %}   
+
+</div>
+<style>
+
+    .feature-products {
+        padding: 90px 0 51px 0;
+      }
+      
+      .feature-product-deccription {
+        font-family: "Lustria", serif;
+        font-size: clamp(2.4rem, 1.247vw + 1.932rem, 3.6rem);
+        font-weight: 400;
+        line-height: 43.2px;
+        text-align: left;
+      
+        margin-bottom: 30px;
+      }
+      .product-blocks-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(169px, 433px));
+        grid-row-gap: clamp(0.4rem, 1.663vw - 0.224rem, 2rem);
+        grid-column-gap: clamp(0.4rem, 1.663vw - 0.224rem, 2rem);
+        justify-content: center;
+        align-content: center;
+      }
+      @media screen and (max-width: 768px) {
+        .product-blocks-grid {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+      .product-block {
+        height: clamp(16.9rem, 28.586vw + 6.18rem, 44.4rem);
+        position: relative;
+      }
+      
+      .product-image {
+        object-fit: cover;
+        display: block;
+        max-width: 100%;
+        height: 100%;
+        object-position: center center;
+      }
+      .product-image[alt="Black Leather Bag"] + .product-item-view {
+        position: absolute;
+        left: 59%;
+        top: 54%;
+      }
+      .product-image[alt="Blue Silk Tuxedo"] + .product-item-view {
+        position: absolute;
+        left: 83%;
+        top: 50%;
+      }
+      
+      .product-image[alt="Chequered Red Shirt"] + .product-item-view {
+        position: absolute;
+        left: 60%;
+        top: 18%;
+      }
+      .product-image[alt="Classic Leather Jacket"] + .product-item-view {
+        position: absolute;
+        left: 70%;
+        top: 16%;
+      }
+      .product-image[alt="Classic Varsity Top"] + .product-item-view {
+        position: absolute;
+        left: 47%;
+        top: 24%;
+      }
+      .product-image[alt="Dark Denim Top"] + .product-item-view {
+        position: absolute;
+        left: 62%;
+        top: 38%;
+      }
+      .product-item-view {
+        cursor: pointer;
+      }
+      .product-popup-wrapper .product-item {
+        display: none;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        z-index: 99;
+        width: 311px;
+        margin: auto;
+        background: white;
+        transform: translate(-50%, -50%);
+        padding: 36px 20px 25px 20px;
+      }
+      
+      .product-popup-wrapper {
+        display: none;
+        background: rgba(0, 0, 0, 0.6);
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 100vh;
+        width: 100%;
+      }
+      .product-item-info-wrapper {
+        display: grid;
+        grid-template-columns: 120px 1fr;
+        gap: 8px;
+      }
+      .close-pop-up {
+        position: absolute;
+        top: 12px;
+        right: 15px;
+        cursor: pointer;
+      }
+      .product-item-image img {
+        height: 140px;
+      }
+      .product-item-title {
+        font-size: 16px;
+        font-weight: 300;
+        line-height: 19.2px;
+        text-align: left;
+      }
+      .product-item-price {
+        font-family: "Lustria", serif;
+        font-size: 16px;
+        font-weight: 400;
+        line-height: 19.2px;
+        text-align: left;
+      }
+      .product-item-description {
+        font-family: "Jost", serif;
+        font-size: 14px;
+        font-weight: 300;
+        line-height: 15.4px;
+        text-align: left;
+      }
+      .varaint-color-heading {
+        font-family: "Jost", serif;
+        font-size: 14px;
+        font-weight: 400;
+        line-height: 18.2px;
+        text-align: left;
+      }
+      .variant-color {
+        display: flex;
+      }
+      .variant-color button {
+        width: 50%;
+      
+        text-align: left;
+        font-family: "Jost", serif;
+        font-size: 18px;
+        font-weight: 400;
+        line-height: 18px;
+        letter-spacing: -0.02em;
+        background-color: white;
+        display: flex;
+        padding: unset;
+      
+        height: 40px;
+      
+        border: 1px solid black;
+        border-left: unset;
+      }
+      .varaint-size-select {
+        margin-top: 11px;
+      }
+      .color-name {
+        display: block;
+        width: 6px;
+        height: 100%;
+        border: 1px solid black;
+      }
+      button[data-color="Black"] > .color-name {
+        background: black;
+      }
+      button[data-color="White"] > .color-name {
+        background: white;
+      }
+      button[data-color="Blue"] > .color-name {
+        background: Blue;
+      }
+      button[data-color="Red"] > .color-name {
+        background: Red;
+      }
+      button[data-color="Gray"] > .color-name {
+        background: gray;
+      }
+      .button-text {
+        padding-top: 10px;
+        padding-left: 8px;
+      }
+      .varaint-size {
+        position: relative;
+      
+        width: 100%;
+      }
+      #varaint-size-select {
+        width: 100%;
+        font-family: "Jost", serif;
+        font-size: 16px;
+        font-weight: 400;
+        line-height: 16px;
+        letter-spacing: -0.02em;
+        text-align: left;
+        padding: 9px 21px 9px 13px;
+        cursor: pointer;
+        appearance: none;
+      }
+      #varaint-size-select:focus-visible {
+        outline: none;
+        box-shadow: unset;
+      }
+      .varaint-size::after {
+        content: " ";
+        position: absolute;
+        width: 0.5px;
+        height: 35px;
+        right: 55px;
+        top: 0;
+        z-index: 9999999;
+        background: black;
+      }
+      
+      .varaint-size::before {
+        content: " ";
+        position: absolute;
+        width: 15px;
+        height: 15px;
+        right: 21px;
+        top: 14px;
+        z-index: 9999999;
+        background-image: url(https://cdn.shopify.com/s/files/1/0910/9664/5916/files/Vector.png?v=1736158929);
+        background-repeat: no-repeat;
+      }
+      .product-item-price {
+        padding: 20px 0 12px;
+      }
+      p {
+        margin: unset;
+      }
+      .varaint-size-select {
+        font-family: "Jost", serif;
+        font-size: 14px;
+        font-weight: 400;
+        line-height: 18.2px;
+        text-align: left;
+      }
+      @media screen and (max-width: 767px) {
+        .feature-products {
+          padding: 40px 0 51px 0;
+        }
+        .feature-product-deccription {
+          margin-bottom: 20px;
+        }
+        .feature-product-deccription {
+          text-align: center;
+        }
+      }
+      
+
+</style>
+
+{% schema %}
+{
+    "name": "Custom Featured Products",
+    "settings": [
+        {
+            "type":"text",
+            "id": "feature-product-description",
+            "label": "Feature Product Description",
+            "default": "Tisso vison in the wild"
+        }
+    ],
+
+    "blocks": [
+        {
+            "type": "product",
+            "name": "Product",
+            "settings": [
+                {
+                    "type": "product",
+                    "id": "product",
+                    "label": "Choose a Product"
+                }
+            ]
+        }
+    ],
+    "max_blocks": 6,
+    "presets": [
+        {
+            "name": "Custom Featured Products",
+            "category": "Custom"
+        }
+    ]
+}
+{% endschema %}

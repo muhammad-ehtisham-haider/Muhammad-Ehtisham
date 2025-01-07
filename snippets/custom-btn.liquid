@@ -1,0 +1,98 @@
+
+
+    <button class="custom-btn  {{ btn_type }}" data-url="{{ btn_url }}"> <span> {{ btn_text }}   
+        <img class="arrow-black" src="https://cdn.shopify.com/s/files/1/0910/9664/5916/files/arrow_black.png?v=1736159703">  
+        <img class="arrow-white" src="https://cdn.shopify.com/s/files/1/0910/9664/5916/files/arrow_white.png?v=1736159703">        
+        </span>
+</button>
+
+        <style>
+                .custom-btn {
+                    font-family: "Jost", serif;
+                    transform: translateZ(0);
+                    position: relative;
+                    border:none;
+                    cursor: pointer;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    padding: unset;
+                        width: 207px;
+                        height: 44px;
+                }
+                .custom-btn span {
+                    display: flex;
+                        gap: 18px;
+                        justify-content: center;
+                        align-items: center;
+                        text-transform: uppercase;
+                }
+                .custom-btn::before {
+                content:"";
+                position: absolute;
+                z-index: -1;
+                top:0;
+                left:0;
+                bottom:0;
+                right:0;
+                transform: scaleX(0);
+                transform-origin: 0 50%;
+                transition-property: transform;
+                transition-duration: 0.3s;
+                
+
+                }
+                .custom-btn:hover::before {
+                    transform:scaleX(1)
+                }
+                .btn-primary {
+                    background: black;
+                    color: white;
+                }
+                .btn-primary .arrow-black {
+                        display: none;
+                }
+                .btn-primary .arrow-white {
+                    display: inline-block;
+                    }
+                .btn-secondary .arrow-black {
+                        display: inline-block;
+                }
+                .btn-secondary .arrow-white {
+                    display: none;
+                    }
+                .btn-primary::before {
+                        background: #FFF544;
+                }
+                .btn-primary:hover {
+                    color:   black;
+                }
+                .btn-secondary:hover .arrow-black {
+                    display: none;
+                  }
+                  .btn-secondary:hover .arrow-white {
+                    display: inline-block;
+
+                  }
+                  .btn-primary:hover .arrow-black {
+                    display: inline-block;
+                  }
+                  .btn-primary:hover .arrow-white {
+                    display: none;
+
+                  }
+                 
+                .btn-secondary {
+                    background: #FFF544;
+                }
+                .btn-secondary:before {
+                        background:black;
+                }
+                .btn-secondary:hover {
+                    color: white;
+                }
+
+                .custom-btn svg {
+                        padding-left: 29px;
+                }
+        </style>
